@@ -1907,6 +1907,13 @@
                     console.log('🔍 mpegts available:', typeof mpegts !== 'undefined');
                     console.log('🔍 mpegts supported:', typeof mpegts !== 'undefined' ? mpegts.isSupported() : false);
                     
+                    // Check for SSL certificate issues and try HTTP fallback
+                    if (url.startsWith('https://') && url.includes('streamy.site')) {
+                        console.log('🔒 HTTPS URL detected, checking for SSL issues...');
+                        const httpUrl = url.replace('https://', 'http://');
+                        console.log('🔄 Will try HTTP fallback if HTTPS fails:', httpUrl);
+                    }
+                    
                     // Test URL accessibility first
                     console.log('🔍 Testing URL accessibility...');
                     try {
@@ -1976,8 +1983,27 @@
                                 networkState: this.video.networkState
                             });
                             
-                            // Check if it's an audio codec issue - look for AC-3 in various error messages
+                            // Check for SSL certificate errors
                             const errorMessage = errorInfo && errorInfo.message ? errorInfo.message : '';
+                            const isSSLError = (errorType === 'NetworkError') ||
+                                             (errorMessage.includes('CERT_COMMON_NAME_INVALID')) ||
+                                             (errorMessage.includes('SSL')) ||
+                                             (errorMessage.includes('certificate')) ||
+                                             (errorMessage.includes('TLS')) ||
+                                             (errorDetail && errorDetail.includes('SSL'));
+                            
+                            if (isSSLError && url.startsWith('https://')) {
+                                console.warn('🔒 SSL certificate error detected, trying HTTP fallback...');
+                                const httpUrl = url.replace('https://', 'http://');
+                                console.log('🔄 Attempting HTTP fallback:', httpUrl);
+                                
+                                // Try HTTP version
+                                this.mpegts.destroy();
+                                this.playMPEGTSStream(httpUrl).then(resolve).catch(reject);
+                                return;
+                            }
+                            
+                            // Check if it's an audio codec issue - look for AC-3 in various error messages
                             const isAC3Error = (errorDetail && errorDetail.includes('ac-3')) ||
                                              (errorMessage.includes('ac-3')) ||
                                              (errorType === 'MediaMSEError' && errorDetail && errorDetail.includes('codecs=ac-3')) ||
@@ -2157,6 +2183,11 @@
                 return new Promise((resolve, reject) => {
                     console.log('🎬 Attempting direct video playback:', url);
                     
+                    // Check for SSL certificate issues and try HTTP fallback
+                    if (url.startsWith('https://') && url.includes('streamy.site')) {
+                        console.log('🔒 HTTPS URL detected, will try HTTP fallback if needed');
+                    }
+                    
                     this.video.src = url;
                     this.video.load();
                     
@@ -2182,6 +2213,17 @@
                         console.error('❌ Direct video error:', e);
                         const error = this.video.error;
                         let errorMessage = 'Direct stream playback failed';
+                        
+                        // Check for SSL certificate errors
+                        if (url.startsWith('https://') && (errorMessage.includes('SSL') || errorMessage.includes('certificate') || errorMessage.includes('CERT_COMMON_NAME_INVALID'))) {
+                            console.warn('🔒 SSL certificate error detected, trying HTTP fallback...');
+                            const httpUrl = url.replace('https://', 'http://');
+                            console.log('🔄 Attempting HTTP fallback:', httpUrl);
+                            
+                            cleanup();
+                            this.playDirectStream(httpUrl).then(resolve).catch(reject);
+                            return;
+                        }
                         
                         if (error) {
                             switch (error.code) {
