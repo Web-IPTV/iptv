@@ -29,6 +29,9 @@ A modern web-based IPTV player with Electronic Program Guide (EPG) support, feat
 
 ## Quick Start
 
+### 🌐 **Live Demo (GitHub Pages)**
+**Try it now**: https://web-iptv.github.io/iptv/
+
 ### Prerequisites
 - Node.js (for EPG server)
 - Python 3 (for EPG fetching script)
@@ -100,6 +103,30 @@ python3 -m http.server 8080
 - **Network**: `http://192.168.1.103:8080/web-iptv.html`
 - **External**: `http://107.142.214.21:8080/web-iptv.html` (after port forwarding)
 - **ngrok**: `https://random-id.ngrok.io/web-iptv.html` (temporary public URL)
+- **GitHub Pages**: `https://web-iptv.github.io/iptv/` (permanent public hosting)
+
+## 🚀 GitHub Pages Deployment
+
+### Automatic Deployment
+Your IPTV player is automatically deployed to GitHub Pages whenever you push to the `main` branch.
+
+**Live URL**: https://web-iptv.github.io/iptv/
+
+### Manual Setup (if needed)
+1. Go to your repository **Settings**
+2. Scroll to **Pages** section
+3. Under **Source**, select **"Deploy from a branch"**
+4. Select **main** branch and **/ (root)** folder
+5. Click **Save**
+
+### GitHub Pages Features
+- ✅ **Free hosting** with custom domain support
+- ✅ **HTTPS enabled** by default
+- ✅ **Automatic deployment** on every push
+- ✅ **CDN distribution** for fast global access
+- ✅ **Custom 404 pages** and redirects
+- ⚠️ **EPG server not available** (client-side only)
+- ⚠️ **Sample playlists only** (no local M3U files)
 
 ## Usage
 
