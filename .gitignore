@@ -6,9 +6,16 @@
 # M3U playlist files (contains credentials)
 *.m3u
 *.m3u8
+channels_filtered.m3u
 
 # EPG cache files
 epg-cache.json
+
+# Configuration files with sensitive data
+.env
+.env.local
+.env.production
+config.js
 
 # Node.js
 node_modules/
