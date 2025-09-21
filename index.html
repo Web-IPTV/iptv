@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Player - Web Streaming</title>
+    <meta name="description" content="Modern web-based IPTV player with EPG support and Spotify-inspired theme">
+    
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="IPTV Player - Web Streaming">
+    <meta property="og:description" content="Modern web-based IPTV player with EPG support and Spotify-inspired theme">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://web-iptv.github.io/iptv/">
+    <meta property="og:image" content="https://web-iptv.github.io/iptv/assets/icon.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="apple-touch-icon" href="assets/icon.png">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 2rem;
+            background: #1db954;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        h1 {
+            color: #1db954;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0a0;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(29, 185, 84, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature h3 {
+            color: #1db954;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature p {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .launch-btn {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2rem 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+        
+        .launch-btn:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            color: #ffc107;
+        }
+        
+        .warning h4 {
+            margin-top: 0;
+            color: #ffc107;
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .footer a {
+            color: #1db954;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📺</div>
+        
+        <h1>IPTV Player</h1>
+        <p class="subtitle">
+            Modern web-based IPTV streaming with Electronic Program Guide (EPG) support.<br>
+            Features a Spotify-inspired dark theme and advanced streaming capabilities.
+        </p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎬</div>
+                <h3>Advanced Streaming</h3>
+                <p>HLS, MPEG-TS, and direct video support with smart fallback mechanisms</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📺</div>
+                <h3>EPG Integration</h3>
+                <p>Real-time Electronic Program Guide with smart caching and channel matching</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <h3>Modern UI</h3>
+                <p>Spotify-inspired dark theme with responsive design for all devices</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📁</div>
+                <h3>File Management</h3>
+                <p>Auto-load playlists, manual upload, and full M3U format support</p>
+            </div>
+        </div>
+        
+        <a href="web-iptv.html" class="launch-btn">
+            🚀 Launch IPTV Player
+        </a>
+        
+        <div class="warning">
+            <h4>⚠️ Important Note</h4>
+            <p>
+                This is a client-side application. For full functionality including EPG data, 
+                you'll need to run the EPG server locally or configure your own EPG endpoints.
+                The player will work for basic streaming without the EPG server.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>
+                <a href="https://github.com/Web-IPTV/iptv" target="_blank">View on GitHub</a> • 
+                <a href="https://github.com/Web-IPTV/iptv/blob/main/README.md" target="_blank">Documentation</a> • 
+                <a href="https://github.com/Web-IPTV/iptv/issues" target="_blank">Report Issues</a>
+            </p>
+            <p>Built with ❤️ for the IPTV community</p>
+        </div>
+    </div>
+</body>
+</html>

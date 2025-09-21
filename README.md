@@ -70,6 +70,37 @@ A modern web-based IPTV player with Electronic Program Guide (EPG) support, feat
    http://localhost:8080/web-iptv.html
    ```
 
+## 🌐 External Access
+
+### Quick Setup with ngrok (Recommended)
+```bash
+# Start the server
+python3 -m http.server 8080
+
+# In another terminal, create public tunnel
+./ngrok-tunnel.sh
+```
+
+### Network Access (Local Network Only)
+```bash
+# Start with external access script
+./start-external.sh
+```
+
+### Manual Port Forwarding
+1. **Find your local IP**: `192.168.1.103`
+2. **Configure router port forwarding**:
+   - External Port: `8080`
+   - Internal IP: `192.168.1.103`
+   - Internal Port: `8080`
+3. **Access via**: `http://YOUR_EXTERNAL_IP:8080/web-iptv.html`
+
+### Access URLs
+- **Local**: `http://localhost:8080/web-iptv.html`
+- **Network**: `http://192.168.1.103:8080/web-iptv.html`
+- **External**: `http://107.142.214.21:8080/web-iptv.html` (after port forwarding)
+- **ngrok**: `https://random-id.ngrok.io/web-iptv.html` (temporary public URL)
+
 ## Usage
 
 ### Loading Channels
