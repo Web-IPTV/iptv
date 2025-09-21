@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Player - HTTP Access</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            color: #1db954;
+            margin-bottom: 30px;
+        }
+        .warning {
+            background-color: #2a2a2a;
+            border: 1px solid #1db954;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .solution {
+            background-color: #1a1a1a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #1db954;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #1ed760;
+        }
+        .info {
+            color: #888;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📺 IPTV Player</h1>
+        
+        <div class="warning">
+            <h3>⚠️ Mixed Content Issue Detected</h3>
+            <p>You're accessing the IPTV player through HTTPS (ngrok), but the IPTV streams are HTTP. This creates a "Mixed Content" security issue that browsers block.</p>
+        </div>
+        
+        <div class="solution">
+            <h3>🔧 Solutions:</h3>
+            
+            <h4>Option 1: Use Local HTTP Access (Recommended)</h4>
+            <p>Access the player directly via your local network:</p>
+            <button onclick="window.location.href='http://192.168.1.103:8080/web-iptv.html'">
+                Open Local HTTP Version
+            </button>
+            
+            <h4>Option 2: Use Native Player</h4>
+            <p>When a stream fails to load, use the "Native Player" button to open it in VLC:</p>
+            <button onclick="window.location.href='https://britney-undeclaimed-unvauntingly.ngrok-free.app/web-iptv.html'">
+                Continue with HTTPS (Use Native Player for streams)
+            </button>
+            
+            <h4>Option 3: Disable HTTPS in Browser</h4>
+            <p>For testing only - disable HTTPS enforcement in your browser settings.</p>
+        </div>
+        
+        <div class="info">
+            <p><strong>Why this happens:</strong></p>
+            <ul style="text-align: left; max-width: 500px; margin: 0 auto;">
+                <li>ngrok provides HTTPS access to your app</li>
+                <li>IPTV streams are typically HTTP</li>
+                <li>Browsers block HTTP content on HTTPS pages for security</li>
+                <li>This is normal behavior and expected</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

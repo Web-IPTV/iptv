@@ -1907,11 +1907,14 @@
                     console.log('🔍 mpegts available:', typeof mpegts !== 'undefined');
                     console.log('🔍 mpegts supported:', typeof mpegts !== 'undefined' ? mpegts.isSupported() : false);
                     
-                    // Check for SSL certificate issues and try HTTP fallback
-                    if (url.startsWith('https://') && url.includes('streamy.site')) {
-                        console.log('🔒 HTTPS URL detected, checking for SSL issues...');
-                        const httpUrl = url.replace('https://', 'http://');
-                        console.log('🔄 Will try HTTP fallback if HTTPS fails:', httpUrl);
+                    // Check for Mixed Content issues when accessing via HTTPS (ngrok)
+                    const isHttpsPage = window.location.protocol === 'https:';
+                    const isHttpStream = url.startsWith('http://');
+                    
+                    if (isHttpsPage && isHttpStream && url.includes('streamy.site')) {
+                        console.log('🔒 Mixed Content detected: HTTPS page trying to load HTTP stream');
+                        console.log('🔄 Browser will automatically upgrade to HTTPS, but streamy.site may not support it');
+                        console.log('🔄 Will try HTTP fallback if HTTPS fails');
                     }
                     
                     // Test URL accessibility first
@@ -1983,14 +1986,30 @@
                                 networkState: this.video.networkState
                             });
                             
-                            // Check for SSL certificate errors
+                            // Check for Mixed Content and SSL certificate errors
                             const errorMessage = errorInfo && errorInfo.message ? errorInfo.message : '';
+                            const isHttpsPage = window.location.protocol === 'https:';
+                            const isHttpStream = url.startsWith('http://');
+                            
                             const isSSLError = (errorType === 'NetworkError') ||
                                              (errorMessage.includes('CERT_COMMON_NAME_INVALID')) ||
                                              (errorMessage.includes('SSL')) ||
                                              (errorMessage.includes('certificate')) ||
                                              (errorMessage.includes('TLS')) ||
+                                             (errorMessage.includes('Mixed Content')) ||
                                              (errorDetail && errorDetail.includes('SSL'));
+                            
+                            // Handle Mixed Content issues (HTTPS page trying to load HTTP stream)
+                            if (isHttpsPage && isHttpStream && url.includes('streamy.site')) {
+                                console.warn('🔒 Mixed Content error detected: HTTPS page trying to load HTTP stream');
+                                console.log('🔄 Browser automatically upgraded HTTP to HTTPS, but streamy.site may not support HTTPS');
+                                console.log('🔄 This is expected behavior when accessing via ngrok (HTTPS)');
+                                
+                                // Show user-friendly message
+                                this.showWarning('Mixed Content: HTTPS page cannot load HTTP streams. Use the Native Player button to open in VLC.');
+                                reject(new Error('Mixed Content: Cannot load HTTP stream from HTTPS page'));
+                                return;
+                            }
                             
                             if (isSSLError && url.startsWith('https://')) {
                                 console.warn('🔒 SSL certificate error detected, trying HTTP fallback...');
