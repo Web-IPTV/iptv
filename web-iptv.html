@@ -8,12 +8,12 @@
     <link rel="apple-touch-icon" href="assets/icon.png">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.js"></script>
+    <script src="config-loader.js"></script>
     <!-- AC-3 Audio Support Notice -->
     <script>
         console.log('🎵 IPTV Player: AC-3 audio support will use browser fallback');
         console.log('💡 Note: AC-3 audio may not work in all browsers due to codec licensing');
     </script>
-    <!-- Config will be loaded dynamically if available -->
     <style>
         * {
             margin: 0;
@@ -2878,13 +2878,14 @@
 
             // Settings Management
             loadSettings() {
+                // Use configuration loader if available, otherwise fallback to defaults
                 const defaultSettings = {
-                    m3uFileName: 'channels_filtered.m3u',
-                    m3uUrl: '',
-                    httpPort: '8080',
-                    epgPort: '3001',
-                    epgScriptPath: '/Users/harshalkutkar/epg_fetch.py',
-                    epgUrl: '',
+                    m3uFileName: window.iptvConfig ? window.iptvConfig.get('DEFAULT_M3U_FILE') : 'channels_filtered.m3u',
+                    m3uUrl: window.iptvConfig ? window.iptvConfig.get('M3U_URL') : '',
+                    httpPort: window.iptvConfig ? window.iptvConfig.get('HTTP_PORT') : '8080',
+                    epgPort: window.iptvConfig ? window.iptvConfig.get('EPG_PORT') : '3001',
+                    epgScriptPath: window.iptvConfig ? window.iptvConfig.get('EPG_SCRIPT_PATH') : '/Users/harshalkutkar/epg_fetch.py',
+                    epgUrl: window.iptvConfig ? window.iptvConfig.get('EPG_URL') : '',
                     cacheDuration: 30,
                     theme: 'spotify',
                     logoSize: 'medium'

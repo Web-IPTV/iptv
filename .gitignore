@@ -99,3 +99,9 @@ test-ssl-fix.html
 # Personal configuration files
 github-pages-config.js
 EXTERNAL-SERVER-SETUP.md
+
+# Environment configuration files
+config.env
+.env
+.env.local
+.env.production

@@ -1,30 +1,78 @@
-const fs = require('fs');
-const path = require('path');
+// Configuration loader for IPTV Player
+// This script loads environment variables and provides default values
 
-// Load environment variables
-require('dotenv').config();
+class ConfigLoader {
+    constructor() {
+        this.config = this.loadConfig();
+    }
 
-// Create a configuration object
-const config = {
-    M3U_FILE_NAME: process.env.M3U_FILE_PATH || 'channels_filtered.m3u',
-    HTTP_PORT: process.env.HTTP_PORT || '8080',
-    EPG_PORT: process.env.EPG_PORT || '3001',
-    EPG_SCRIPT_PATH: process.env.EPG_SCRIPT_PATH || '/Users/harshalkutkar/epg_fetch.py',
-    CACHE_DURATION_MINUTES: process.env.CACHE_DURATION_MINUTES || '30'
-};
+    loadConfig() {
+        // Default configuration
+        const defaultConfig = {
+            DEFAULT_M3U_FILE: 'channels_filtered.m3u',
+            HTTP_PORT: '8080',
+            EPG_PORT: '3001',
+            EPG_SCRIPT_PATH: '/Users/harshalkutkar/epg_fetch.py',
+            EPG_URL: '',
+            M3U_URL: ''
+        };
 
-// Generate a JavaScript file that can be included in the HTML
-const configJs = `
-// Auto-generated configuration from environment variables
-window.IPTV_CONFIG = ${JSON.stringify(config, null, 2)};
-`;
+        // Try to load from config.env file (if available)
+        try {
+            // In a real environment, you would load from a .env file
+            // For now, we'll use localStorage to store user preferences
+            const savedConfig = localStorage.getItem('iptv-config');
+            if (savedConfig) {
+                const parsedConfig = JSON.parse(savedConfig);
+                return { ...defaultConfig, ...parsedConfig };
+            }
+        } catch (error) {
+            console.warn('Could not load saved configuration:', error);
+        }
 
-// Write the config file
-fs.writeFileSync(path.join(__dirname, 'config.js'), configJs);
+        return defaultConfig;
+    }
 
-console.log('Configuration loaded:');
-console.log('- M3U File:', config.M3U_FILE_NAME);
-console.log('- HTTP Port:', config.HTTP_PORT);
-console.log('- EPG Port:', config.EPG_PORT);
-console.log('- EPG Script:', config.EPG_SCRIPT_PATH);
-console.log('- Cache Duration:', config.CACHE_DURATION_MINUTES, 'minutes');
+    get(key) {
+        return this.config[key] || '';
+    }
+
+    set(key, value) {
+        this.config[key] = value;
+        this.saveConfig();
+    }
+
+    saveConfig() {
+        try {
+            localStorage.setItem('iptv-config', JSON.stringify(this.config));
+        } catch (error) {
+            console.warn('Could not save configuration:', error);
+        }
+    }
+
+    // Get all configuration as an object
+    getAll() {
+        return { ...this.config };
+    }
+
+    // Reset to defaults
+    reset() {
+        this.config = {
+            DEFAULT_M3U_FILE: 'channels_filtered.m3u',
+            HTTP_PORT: '8080',
+            EPG_PORT: '3001',
+            EPG_SCRIPT_PATH: '/Users/harshalkutkar/epg_fetch.py',
+            EPG_URL: '',
+            M3U_URL: ''
+        };
+        this.saveConfig();
+    }
+}
+
+// Create global instance
+window.iptvConfig = new ConfigLoader();
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ConfigLoader;
+}
