@@ -1,15 +1,16 @@
 {
-  "name": "iptv-electron-app",
+  "name": "iptv-web-player",
   "version": "1.0.0",
-  "description": "Standalone IPTV Player - No CORS restrictions",
-  "main": "minimal-main.js",
+  "description": "Web-based IPTV Player with EPG support",
+  "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
     "build-mac": "electron-builder --mac",
     "build-win": "electron-builder --win",
     "build-linux": "electron-builder --linux",
-    "dist": "npm run build"
+    "dist": "npm run build",
+    "pack": "electron-builder --dir"
   },
   "keywords": [
     "iptv",
@@ -17,7 +18,8 @@
     "mpegts",
     "electron",
     "desktop",
-    "app"
+    "app",
+    "web"
   ],
   "author": "IPTV Player",
   "license": "MIT",
@@ -32,19 +34,25 @@
     "mpegts.js": "^1.7.2"
   },
   "build": {
-    "appId": "com.iptvplayer.app",
-    "productName": "IPTV Player",
+    "appId": "com.iptvplayer.webapp",
+    "productName": "IPTV Web Player",
     "directories": {
       "output": "dist"
     },
     "files": [
       "main.js",
-      "renderer.js",
-      "index.html",
-      "styles.css",
-      "m3u-parser.js",
-      "channels_filtered.m3u",
+      "web-iptv.html",
+      "epg-server.js",
+      "config-loader.js",
+      "package.json",
+      "samples/**/*",
       "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "env.example",
+        "to": "env.example"
+      }
     ],
     "mac": {
       "category": "public.app-category.entertainment",
