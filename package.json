@@ -1,0 +1,60 @@
+{
+  "name": "iptv-electron-app",
+  "version": "1.0.0",
+  "description": "Standalone IPTV Player - No CORS restrictions",
+  "main": "minimal-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-mac": "electron-builder --mac",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux",
+    "dist": "npm run build"
+  },
+  "keywords": [
+    "iptv",
+    "streaming",
+    "mpegts",
+    "electron",
+    "desktop",
+    "app"
+  ],
+  "author": "IPTV Player",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "mpegts.js": "^1.7.2"
+  },
+  "build": {
+    "appId": "com.iptvplayer.app",
+    "productName": "IPTV Player",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "m3u-parser.js",
+      "channels_filtered.m3u",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

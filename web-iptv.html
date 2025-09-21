@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPTV Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.js"></script>
+    <script src="config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121212;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: #1a1a1a;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #1db954;
+            border: none;
+            box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .epg-panel {
+            width: 350px;
+            background: #1a1a1a;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+        }
+
+        .epg-panel.collapsed {
+            width: 0;
+            overflow: hidden;
+        }
+
+        .epg-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .epg-header h3 {
+            color: #1db954;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .epg-toggle {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .epg-toggle:hover {
+            background: #444;
+        }
+
+        .epg-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .epg-channel-info {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .epg-channel-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1db954;
+            margin-bottom: 0.5rem;
+        }
+
+        .epg-current-programme {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .epg-current-programme h4 {
+            color: #4ade80;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .epg-programme-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .epg-programme-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.2s ease;
+        }
+
+        .epg-programme-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .epg-programme-item.current {
+            background: rgba(74, 222, 128, 0.1);
+            border-left: 3px solid #4ade80;
+        }
+
+        .epg-programme-time {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            margin-bottom: 0.25rem;
+        }
+
+        .epg-programme-title {
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .epg-loading {
+            text-align: center;
+            color: #a0a0a0;
+            padding: 2rem;
+        }
+
+        .epg-error {
+            text-align: center;
+            color: #ff4757;
+            padding: 2rem;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: #1a1a1a;
+            border-left: 1px solid #333;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-header h3 {
+            color: #1db954;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .settings-close {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .settings-close:hover {
+            background: #444;
+        }
+
+        .settings-content {
+            padding: 1rem;
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+
+        .settings-section h4 {
+            color: #1db954;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+
+        .settings-group {
+            margin-bottom: 1rem;
+        }
+
+        .settings-label {
+            display: block;
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-input {
+            width: 100%;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: #1db954;
+        }
+
+        .settings-input::placeholder {
+            color: #999;
+        }
+
+        .settings-button {
+            background: #1db954;
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-button:hover {
+            background: #1ed760;
+        }
+
+        .settings-button.secondary {
+            background: #333;
+            border: 1px solid #555;
+        }
+
+        .settings-button.secondary:hover {
+            background: #444;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .settings-overlay.open {
+            display: block;
+        }
+
+        .video-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+            margin: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .video-container {
+            position: relative;
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #video-player {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .player-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .player-overlay h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .player-overlay p {
+            color: #a0a0a0;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .video-controls {
+            padding: 1rem;
+            background: #2a2a2a;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-control {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .channels-section {
+            flex: 1;
+            background: #1a1a1a;
+            margin: 1rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #333;
+            max-height: calc(100vh - 200px);
+        }
+
+        .channels-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .channels-header h2 {
+            color: #1db954;
+            font-size: 1.3rem;
+            font-weight: 300;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .search-input {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .search-input::placeholder {
+            color: #999;
+        }
+
+        .channels-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            max-height: calc(100vh - 300px);
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #2a2a2a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #333;
+        }
+
+        .channel-item:hover {
+            background: #333;
+            transform: translateX(5px);
+        }
+
+        .channel-item.active {
+            background: rgba(29, 185, 84, 0.2);
+            border-color: #1db954;
+        }
+
+        .channel-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            margin-right: 0.75rem;
+            object-fit: cover;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .channel-logo img {
+            max-width: 60px;
+            max-height: 60px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .channel-info {
+            flex: 1;
+        }
+
+        .channel-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .channel-group {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #a0a0a0;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        .status-bar {
+            background: #1a1a1a;
+            padding: 0.75rem 2rem;
+            border-top: 1px solid #333;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff4757;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+            z-index: 1001;
+            display: none;
+            max-width: 400px;
+        }
+
+        .file-input-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .epg-panel {
+                width: 100%;
+                height: 300px;
+            }
+            
+            .channels-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-input {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📺 IPTV Player</h1>
+        <div class="controls">
+            <div class="file-input-container">
+                <input type="file" id="file-input" class="file-input" accept=".m3u,.m3u8">
+                <label for="file-input" class="file-input-label">📁 Upload M3U File</label>
+            </div>
+            <button id="load-default-btn" class="btn btn-primary">🔄 Load Default Playlist</button>
+            <button id="settings-btn" class="btn">⚙️ Settings</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <section class="video-section">
+            <div class="video-container">
+                <video id="video-player" controls>
+                    <p>Your browser doesn't support HTML5 video.</p>
+                </video>
+                <div class="player-overlay" id="player-overlay">
+                    <h3>🎬 Stream Ready</h3>
+                    <p>Select a channel from the list to start streaming. The player will automatically detect and use the best streaming technology for your content.</p>
+                </div>
+            </div>
+            <div class="video-controls">
+                <button id="play-pause-btn" class="btn btn-control">⏸️ Pause</button>
+                <button id="mute-btn" class="btn btn-control">🔇 Mute</button>
+                <button id="fullscreen-btn" class="btn btn-control">⛶ Fullscreen</button>
+            </div>
+        </section>
+
+        <section class="channels-section">
+            <div class="channels-header">
+                <h2>📋 Channels</h2>
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Search channels..." class="search-input">
+                </div>
+            </div>
+            
+            <div id="channels-container" class="channels-container">
+                <div class="empty-state">
+                    <p>📁 Load an M3U file to see channels</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="epg-panel" id="epg-panel">
+            <div class="epg-header">
+                <h3>📺 EPG Guide</h3>
+                <button class="epg-toggle" id="epg-toggle">Hide</button>
+            </div>
+            <div class="epg-content" id="epg-content">
+                <div class="epg-loading">
+                    <p>Select a channel to view EPG</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="status-bar">
+        <span id="status-text">Ready - Load an M3U file to start</span>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-text">Loading...</p>
+        </div>
+    </div>
+
+    <div class="error-message" id="error-message">
+        <span class="error-text"></span>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-overlay" id="settings-overlay"></div>
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-header">
+            <h3>⚙️ Settings</h3>
+            <button class="settings-close" id="settings-close">✕</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-section">
+                <h4>📁 M3U Configuration</h4>
+                <div class="settings-group">
+                    <label class="settings-label">M3U File Name</label>
+                    <input type="text" id="m3u-file-name" class="settings-input" placeholder="channels_filtered.m3u">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">M3U URL (for remote playlists)</label>
+                    <input type="url" id="m3u-url" class="settings-input" placeholder="http://example.com/playlist.m3u">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>🌐 Server Configuration</h4>
+                <div class="settings-group">
+                    <label class="settings-label">HTTP Server Port</label>
+                    <input type="number" id="http-port" class="settings-input" placeholder="8080" min="1000" max="65535">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">EPG Server Port</label>
+                    <input type="number" id="epg-port" class="settings-input" placeholder="3001" min="1000" max="65535">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>📺 EPG Configuration</h4>
+                <div class="settings-group">
+                    <label class="settings-label">EPG Script Path</label>
+                    <input type="text" id="epg-script-path" class="settings-input" placeholder="/path/to/epg_fetch.py">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">EPG URL</label>
+                    <input type="url" id="epg-url" class="settings-input" placeholder="http://example.com/xmltv.php">
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">Cache Duration (minutes)</label>
+                    <input type="number" id="cache-duration" class="settings-input" placeholder="30" min="1" max="1440">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>🎨 UI Configuration</h4>
+                <div class="settings-group">
+                    <label class="settings-label">Theme</label>
+                    <select id="theme-select" class="settings-input">
+                        <option value="spotify">Spotify Dark</option>
+                        <option value="classic">Classic</option>
+                        <option value="minimal">Minimal</option>
+                    </select>
+                </div>
+                <div class="settings-group">
+                    <label class="settings-label">Channel Logo Size</label>
+                    <select id="logo-size" class="settings-input">
+                        <option value="small">Small (24px)</option>
+                        <option value="medium" selected>Medium (40px)</option>
+                        <option value="large">Large (60px)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h4>💾 Data Management</h4>
+                <button class="settings-button" id="save-settings">💾 Save Settings</button>
+                <button class="settings-button secondary" id="reset-settings">🔄 Reset to Defaults</button>
+                <button class="settings-button secondary" id="export-settings">📤 Export Settings</button>
+                <button class="settings-button secondary" id="import-settings">📥 Import Settings</button>
+            </div>
+
+            <div class="settings-section">
+                <h4>🔧 Advanced</h4>
+                <button class="settings-button secondary" id="clear-cache">🗑️ Clear EPG Cache</button>
+                <button class="settings-button secondary" id="test-epg">🧪 Test EPG Connection</button>
+                <button class="settings-button secondary" id="reload-config">🔄 Reload Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class IPTVApp {
+            constructor() {
+                this.channels = [];
+                this.currentChannel = null;
+                this.video = null;
+                this.hls = null;
+                this.mpegts = null;
+                this.isLoading = false;
+                this.epgData = null;
+                this.epgPanelVisible = true;
+                this.settings = this.loadSettings();
+                
+                this.initializeApp();
+            }
+
+            initializeApp() {
+                this.video = document.getElementById('video-player');
+                this.setupEventListeners();
+                this.updateStatus('Loading default channels...');
+                
+                // Auto-load the default M3U file
+                this.loadDefaultM3U();
+            }
+
+            setupEventListeners() {
+                // File input
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        if (e.target.files.length > 0) {
+                            this.handleFileSelect(e.target.files[0]);
+                        }
+                    });
+                }
+
+                // Load default button
+                document.getElementById('load-default-btn').addEventListener('click', () => {
+                    this.loadDefaultM3U();
+                });
+
+                // Video controls
+                document.getElementById('play-pause-btn').addEventListener('click', () => {
+                    this.togglePlayPause();
+                });
+
+                document.getElementById('mute-btn').addEventListener('click', () => {
+                    this.toggleMute();
+                });
+
+                document.getElementById('fullscreen-btn').addEventListener('click', () => {
+                    this.toggleFullscreen();
+                });
+
+                // Search
+                document.getElementById('search-input').addEventListener('input', (e) => {
+                    this.filterChannels(e.target.value);
+                });
+
+                // EPG toggle
+                document.getElementById('epg-toggle').addEventListener('click', () => {
+                    this.toggleEPGPanel();
+                });
+
+                // Settings
+                document.getElementById('settings-btn').addEventListener('click', () => {
+                    this.openSettings();
+                });
+
+                document.getElementById('settings-close').addEventListener('click', () => {
+                    this.closeSettings();
+                });
+
+                document.getElementById('settings-overlay').addEventListener('click', () => {
+                    this.closeSettings();
+                });
+
+                // Settings buttons
+                document.getElementById('save-settings').addEventListener('click', () => {
+                    this.saveSettings();
+                });
+
+                document.getElementById('reset-settings').addEventListener('click', () => {
+                    this.resetSettings();
+                });
+
+                document.getElementById('export-settings').addEventListener('click', () => {
+                    this.exportSettings();
+                });
+
+                document.getElementById('import-settings').addEventListener('click', () => {
+                    this.importSettings();
+                });
+
+                document.getElementById('clear-cache').addEventListener('click', () => {
+                    this.clearEPGCache();
+                });
+
+                document.getElementById('test-epg').addEventListener('click', () => {
+                    this.testEPGConnection();
+                });
+
+                document.getElementById('reload-config').addEventListener('click', () => {
+                    this.reloadConfiguration();
+                });
+
+                // Video events
+                this.video.addEventListener('error', (e) => {
+                    this.handleVideoError(e);
+                });
+
+                this.video.addEventListener('loadstart', () => {
+                    this.updateStatus('Loading stream...');
+                });
+
+                this.video.addEventListener('canplay', () => {
+                    this.updateStatus('Stream ready');
+                });
+            }
+
+            async loadDefaultM3U() {
+                try {
+                    // Use settings for configuration
+                    const m3uFileName = this.settings.m3uFileName;
+                    const httpPort = this.settings.httpPort;
+                    
+                    // Try HTTP server first, then fallback to file upload
+                    const response = await fetch(`http://localhost:${httpPort}/${m3uFileName}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const content = await response.text();
+                    this.channels = await this.parseM3U(content);
+                    this.renderChannels();
+                    this.updateStatus(`Loaded ${this.channels.length} channels from default playlist`);
+                } catch (error) {
+                    console.error('Error loading default M3U:', error);
+                    this.updateStatus('Ready - Upload an M3U file to start');
+                    this.showError(`Failed to load default playlist. Please upload an M3U file manually.`);
+                }
+            }
+
+            async handleFileSelect(file) {
+                if (!file) return;
+                
+                this.updateStatus('Loading M3U file...');
+                this.showLoadingOverlay();
+                
+                try {
+                    const content = await this.readFile(file);
+                    this.channels = await this.parseM3U(content);
+                    this.renderChannels();
+                    this.updateStatus(`Loaded ${this.channels.length} channels successfully`);
+                } catch (error) {
+                    console.error('Error loading M3U file:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    this.showError(`Failed to load M3U file: ${error.message}`);
+                } finally {
+                    this.hideLoadingOverlay();
+                }
+            }
+
+            readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = () => reject(new Error('Failed to read file'));
+                    reader.readAsText(file);
+                });
+            }
+
+            async parseM3U(content) {
+                const lines = content.split('\n');
+                const channels = [];
+                let currentChannel = null;
+                let processedLines = 0;
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    if (line.startsWith('#EXTINF:')) {
+                        currentChannel = this.parseExtInf(line);
+                    } else if (line && !line.startsWith('#') && currentChannel) {
+                        currentChannel.url = line;
+                        channels.push(currentChannel);
+                        currentChannel = null;
+                    }
+
+                    processedLines++;
+                    
+                    // Update progress every 10 lines
+                    if (processedLines % 10 === 0 || i === lines.length - 1) {
+                        const progress = Math.round((processedLines / lines.length) * 100);
+                        this.updateProgress({
+                            progress: progress,
+                            channelsFound: channels.length,
+                            currentLine: i + 1,
+                            totalLines: lines.length
+                        });
+                        
+                        // Allow UI to update
+                        await new Promise(resolve => setTimeout(resolve, 1));
+                    }
+                }
+
+                return channels;
+            }
+
+            parseExtInf(line) {
+                const channel = {
+                    name: '',
+                    logo: '',
+                    group: '',
+                    id: '',
+                    url: ''
+                };
+
+                // Extract tvg-name
+                const nameMatch = line.match(/tvg-name="([^"]*)"/);
+                if (nameMatch) {
+                    channel.name = nameMatch[1];
+                }
+
+                // Extract tvg-logo
+                const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+                if (logoMatch) {
+                    channel.logo = logoMatch[1];
+                }
+
+                // Extract group-title
+                const groupMatch = line.match(/group-title="([^"]*)"/);
+                if (groupMatch) {
+                    channel.group = groupMatch[1];
+                }
+
+                // Extract tvg-id
+                const idMatch = line.match(/tvg-id="([^"]*)"/);
+                if (idMatch) {
+                    channel.id = idMatch[1];
+                }
+
+                // If no tvg-name, try to extract from the end of the line
+                if (!channel.name) {
+                    const parts = line.split(',');
+                    if (parts.length > 1) {
+                        channel.name = parts[parts.length - 1].trim();
+                    }
+                }
+
+                return channel;
+            }
+
+            renderChannels() {
+                const container = document.getElementById('channels-container');
+                
+                if (this.channels.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No channels found in the playlist</p></div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                
+                this.channels.forEach(channel => {
+                    const channelElement = this.createChannelElement(channel);
+                    container.appendChild(channelElement);
+                });
+            }
+
+            createChannelElement(channel) {
+                const div = document.createElement('div');
+                div.className = 'channel-item';
+                div.addEventListener('click', () => this.playChannel(channel));
+
+                const logoDiv = document.createElement('div');
+                logoDiv.className = 'channel-logo';
+                
+                if (channel.logo) {
+                    const img = document.createElement('img');
+                    img.src = channel.logo;
+                    img.alt = channel.name;
+                    img.onerror = () => {
+                        // Fallback to emoji based on channel name
+                        logoDiv.textContent = this.getChannelEmoji(channel.name);
+                        logoDiv.style.fontSize = '0.8rem';
+                    };
+                    logoDiv.appendChild(img);
+                } else {
+                    logoDiv.textContent = this.getChannelEmoji(channel.name);
+                    logoDiv.style.fontSize = '0.8rem';
+                }
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'channel-info';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'channel-name';
+                nameDiv.textContent = channel.name;
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'channel-group';
+                groupDiv.textContent = channel.group || 'Unknown Group';
+
+                infoDiv.appendChild(nameDiv);
+                infoDiv.appendChild(groupDiv);
+
+                div.appendChild(logoDiv);
+                div.appendChild(infoDiv);
+
+                return div;
+            }
+
+            getChannelEmoji(channelName) {
+                const name = channelName.toLowerCase();
+                if (name.includes('bbc')) return '🇬🇧';
+                if (name.includes('itv')) return '📺';
+                if (name.includes('sky')) return '☁️';
+                if (name.includes('cnn')) return '📰';
+                if (name.includes('fox')) return '🦊';
+                if (name.includes('disney')) return '🏰';
+                if (name.includes('hbo')) return '🎬';
+                if (name.includes('netflix')) return '🎭';
+                if (name.includes('sport')) return '⚽';
+                if (name.includes('news')) return '📺';
+                return '📡';
+            }
+
+            filterChannels(searchTerm) {
+                const channels = document.querySelectorAll('.channel-item');
+                const term = searchTerm.toLowerCase();
+
+                channels.forEach(channel => {
+                    const name = channel.querySelector('.channel-name').textContent.toLowerCase();
+                    const group = channel.querySelector('.channel-group').textContent.toLowerCase();
+                    
+                    if (name.includes(term) || group.includes(term)) {
+                        channel.style.display = 'flex';
+                    } else {
+                        channel.style.display = 'none';
+                    }
+                });
+            }
+
+            async playChannel(channel) {
+                if (this.currentChannel === channel) return;
+                
+                this.currentChannel = channel;
+                this.updateStatus(`Loading ${channel.name}...`);
+                
+                // Clean up previous HLS instance
+                this.cleanupHLS();
+                
+                try {
+                    await this.playStreamWithHLS(channel.url);
+                    this.updateStatus(`Playing ${channel.name}`);
+                    
+                    // Load EPG for current channel
+                    this.loadChannelEPG(channel);
+                } catch (error) {
+                    console.error('Stream error:', error);
+                    this.updateStatus(`Error playing ${channel.name}`);
+                    this.showError(`Failed to play ${channel.name}: ${error.message}`);
+                }
+            }
+
+            async playStreamWithHLS(url) {
+                // Check if it's a .m3u8 HLS stream
+                if (url.includes('.m3u8') || url.includes('m3u8')) {
+                    await this.playHLSStream(url);
+                } else if (this.isLikelyMPEGTS(url)) {
+                    await this.playMPEGTSStream(url);
+                } else {
+                    // Try direct video first
+                    try {
+                        await this.playDirectStream(url);
+                    } catch (error) {
+                        console.log('Direct stream failed, trying HLS...');
+                        await this.playHLSStream(url);
+                    }
+                }
+            }
+
+            async playHLSStream(url) {
+                return new Promise((resolve, reject) => {
+                    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                        this.hls = new Hls({
+                            enableWorker: true,
+                            lowLatencyMode: true,
+                            backBufferLength: 90
+                        });
+                        
+                        this.hls.loadSource(url);
+                        this.hls.attachMedia(this.video);
+                        
+                        this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            console.log('HLS manifest parsed, starting playback');
+                            this.video.play().then(resolve).catch(reject);
+                        });
+                        
+                        this.hls.on(Hls.Events.ERROR, (event, data) => {
+                            console.error('HLS error:', data);
+                            if (data.fatal) {
+                                reject(new Error(`HLS Error: ${data.type} - ${data.details}`));
+                            }
+                        });
+                        
+                        // Timeout after 10 seconds
+                        setTimeout(() => {
+                            if (this.video.readyState < 2) {
+                                reject(new Error('HLS stream timeout'));
+                            }
+                        }, 10000);
+                    } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+                        this.video.src = url;
+                        this.video.addEventListener('loadedmetadata', () => {
+                            this.video.play().then(resolve).catch(reject);
+                        });
+                        this.video.addEventListener('error', () => {
+                            reject(new Error('Native HLS playback failed'));
+                        });
+                    } else {
+                        reject(new Error('HLS is not supported'));
+                    }
+                });
+            }
+
+            async playMPEGTSStream(url) {
+                return new Promise((resolve, reject) => {
+                    if (typeof mpegts !== 'undefined' && mpegts.isSupported()) {
+                        this.mpegts = mpegts.createPlayer({
+                            type: 'mpegts',
+                            url: url,
+                            isLive: true,
+                            cors: true,
+                            withCredentials: false
+                        }, {
+                            enableWorker: true,
+                            enableStashBuffer: false,
+                            stashInitialSize: 128,
+                            autoCleanupSourceBuffer: true
+                        });
+                        
+                        this.mpegts.attachMediaElement(this.video);
+                        
+                        this.mpegts.on(mpegts.Events.ERROR, (errorType, errorDetail, errorInfo) => {
+                            console.error('mpegts.js error:', errorType, errorDetail, errorInfo);
+                            reject(new Error(`MPEG-TS Error: ${errorType} - ${errorDetail}`));
+                        });
+                        
+                        this.mpegts.on(mpegts.Events.MEDIA_INFO, (mediaInfo) => {
+                            console.log('Media info:', mediaInfo);
+                        });
+                        
+                        this.mpegts.load();
+                        
+                        this.video.addEventListener('canplay', () => {
+                            this.video.play().then(resolve).catch(reject);
+                        });
+                        
+                        // Timeout after 10 seconds
+                        setTimeout(() => {
+                            if (this.video.readyState < 2) {
+                                reject(new Error('MPEG-TS stream timeout'));
+                            }
+                        }, 10000);
+                    } else {
+                        reject(new Error('mpegts.js is not supported'));
+                    }
+                });
+            }
+
+            async playDirectStream(url) {
+                return new Promise((resolve, reject) => {
+                    this.video.src = url;
+                    this.video.load();
+                    
+                    this.video.addEventListener('canplay', () => {
+                        this.video.play().then(resolve).catch(reject);
+                    });
+                    
+                    this.video.addEventListener('error', (e) => {
+                        reject(new Error('Direct stream playback failed'));
+                    });
+                    
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        if (this.video.readyState < 2) {
+                            reject(new Error('Direct stream timeout'));
+                        }
+                    }, 10000);
+                });
+            }
+
+            isLikelyMPEGTS(url) {
+                const mpegtsPatterns = [
+                    /\.ts$/i,
+                    /mpegts/i,
+                    /transport/i,
+                    /streamy\.site/i,
+                    /get\.php.*output=ts/i
+                ];
+                
+                return mpegtsPatterns.some(pattern => pattern.test(url));
+            }
+
+            cleanupHLS() {
+                if (this.hls) {
+                    this.hls.destroy();
+                    this.hls = null;
+                }
+                if (this.mpegts) {
+                    this.mpegts.destroy();
+                    this.mpegts = null;
+                }
+                this.video.src = '';
+                this.video.load();
+            }
+
+            togglePlayPause() {
+                if (this.video.paused) {
+                    this.video.play();
+                    document.getElementById('play-pause-btn').textContent = '⏸️ Pause';
+                } else {
+                    this.video.pause();
+                    document.getElementById('play-pause-btn').textContent = '▶️ Play';
+                }
+            }
+
+            toggleMute() {
+                this.video.muted = !this.video.muted;
+                document.getElementById('mute-btn').textContent = this.video.muted ? '🔊 Unmute' : '🔇 Mute';
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    this.video.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            updateStatus(message) {
+                document.getElementById('status-text').textContent = message;
+            }
+
+            showLoadingOverlay() {
+                document.getElementById('loading-overlay').style.display = 'flex';
+            }
+
+            hideLoadingOverlay() {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+
+            updateProgress({ progress, channelsFound, currentLine, totalLines }) {
+                const loadingText = document.getElementById('loading-text');
+                loadingText.textContent = `Loading... ${progress}% (${channelsFound} channels found)`;
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('error-message');
+                const errorText = errorDiv.querySelector('.error-text');
+                errorText.textContent = message;
+                errorDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+
+            handleVideoError(event) {
+                const error = event.target.error;
+                let message = 'Unknown video error';
+                
+                if (error) {
+                    switch (error.code) {
+                        case error.MEDIA_ERR_ABORTED:
+                            message = 'Video playback was aborted';
+                            break;
+                        case error.MEDIA_ERR_NETWORK:
+                            message = 'Network error occurred';
+                            break;
+                        case error.MEDIA_ERR_DECODE:
+                            message = 'Video decoding error';
+                            break;
+                        case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            message = 'Video format not supported';
+                            break;
+                    }
+                }
+                
+                this.updateStatus(`Video Error: ${message}`);
+                this.showError(message);
+            }
+
+            toggleEPGPanel() {
+                const epgPanel = document.getElementById('epg-panel');
+                const epgToggle = document.getElementById('epg-toggle');
+                
+                this.epgPanelVisible = !this.epgPanelVisible;
+                
+                if (this.epgPanelVisible) {
+                    epgPanel.classList.remove('collapsed');
+                    epgToggle.textContent = 'Hide';
+                } else {
+                    epgPanel.classList.add('collapsed');
+                    epgToggle.textContent = 'Show';
+                }
+            }
+
+            async loadChannelEPG(channel) {
+                const epgContent = document.getElementById('epg-content');
+                
+                // Show loading state
+                epgContent.innerHTML = `
+                    <div class="epg-loading">
+                        <p>Loading EPG for ${channel.name}...</p>
+                    </div>
+                `;
+
+                try {
+                    // Get channel ID for EPG lookup using the exact tvg-id from M3U
+                    const channelId = this.extractChannelId(channel);
+                    
+                    if (!channelId) {
+                        epgContent.innerHTML = `
+                            <div class="epg-error">
+                                <p>No EPG data available for this channel</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    console.log(`Fetching EPG for channel ID: ${channelId}`);
+                    
+                    // Call Python script to get EPG data
+                    const epgResponse = await this.fetchEPGData(channelId);
+                    this.displayEPGData(channel, epgResponse.programmes, epgResponse.cached);
+                    
+                } catch (error) {
+                    console.error('Error loading EPG:', error);
+                    epgContent.innerHTML = `
+                        <div class="epg-error">
+                            <p>Failed to load EPG data</p>
+                            <p style="font-size: 0.8rem; color: #a0a0a0;">${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            extractChannelId(channel) {
+                // Use the tvg-id from the M3U file if available
+                if (channel.id && channel.id.trim()) {
+                    return channel.id.trim();
+                }
+                
+                // Fallback: try to extract channel ID from common patterns in the name
+                const channelName = channel.name || '';
+                const patterns = [
+                    /bbc\s*(\d+)/i,
+                    /itv\s*(\d+)/i,
+                    /channel\s*(\d+)/i,
+                    /sky\s*(\d+)/i
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = channelName.match(pattern);
+                    if (match) {
+                        return match[0].toLowerCase().replace(/\s+/g, '');
+                    }
+                }
+                
+                // Return a simplified version of the channel name
+                return channelName.toLowerCase()
+                    .replace(/[^a-z0-9]/g, '')
+                    .substring(0, 20);
+            }
+
+            async fetchEPGData(channelId) {
+                try {
+                    const epgPort = this.settings.epgPort;
+                    const response = await fetch(`http://localhost:${epgPort}/api/epg/${encodeURIComponent(channelId)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        return {
+                            programmes: data.programmes,
+                            cached: data.cached || false
+                        };
+                    } else {
+                        throw new Error(data.error || 'Failed to fetch EPG data');
+                    }
+                } catch (error) {
+                    console.error('EPG fetch error:', error);
+                    
+                    // Fallback to mock data if server is not available
+                    console.log('Using mock EPG data as fallback');
+                    return {
+                        programmes: [
+                            {
+                                start: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+                                stop: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+                                title: 'Current Programme'
+                            },
+                            {
+                                start: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+                                stop: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
+                                title: 'Next Programme'
+                            },
+                            {
+                                start: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
+                                stop: new Date(Date.now() + 150 * 60 * 1000).toISOString(),
+                                title: 'Evening Show'
+                            }
+                        ],
+                        cached: false
+                    };
+                }
+            }
+
+            displayEPGData(channel, epgData, isCached = false) {
+                const epgContent = document.getElementById('epg-content');
+                const now = new Date();
+                
+                let html = `
+                    <div class="epg-channel-info">
+                        <div class="epg-channel-name">📺 ${channel.name}</div>
+                        ${isCached ? '<div style="font-size: 0.8rem; color: #4ade80;">💾 Cached data</div>' : ''}
+                    </div>
+                `;
+
+                // Find current programme
+                const currentProgramme = epgData.find(prog => {
+                    const start = new Date(prog.start);
+                    const stop = new Date(prog.stop);
+                    return now >= start && now <= stop;
+                });
+
+                if (currentProgramme) {
+                    const startTime = new Date(currentProgramme.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const endTime = new Date(currentProgramme.stop).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    html += `
+                        <div class="epg-current-programme">
+                            <h4>🔴 NOW</h4>
+                            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">${currentProgramme.title}</div>
+                            <div style="font-size: 0.9rem; color: #a0a0a0;">${startTime} - ${endTime}</div>
+                        </div>
+                    `;
+                }
+
+                html += '<div class="epg-programme-list">';
+                
+                epgData.forEach((programme, index) => {
+                    const start = new Date(programme.start);
+                    const stop = new Date(programme.stop);
+                    const isCurrent = now >= start && now <= stop;
+                    
+                    const startTime = start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const endTime = stop.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    html += `
+                        <div class="epg-programme-item ${isCurrent ? 'current' : ''}">
+                            <div class="epg-programme-time">${startTime} - ${endTime}</div>
+                            <div class="epg-programme-title">${programme.title}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                
+                epgContent.innerHTML = html;
+            }
+
+            // Settings Management
+            loadSettings() {
+                const defaultSettings = {
+                    m3uFileName: 'channels_filtered.m3u',
+                    m3uUrl: '',
+                    httpPort: '8080',
+                    epgPort: '3001',
+                    epgScriptPath: '/Users/harshalkutkar/epg_fetch.py',
+                    epgUrl: '',
+                    cacheDuration: 30,
+                    theme: 'spotify',
+                    logoSize: 'medium'
+                };
+
+                try {
+                    const saved = localStorage.getItem('iptv-settings');
+                    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                    return defaultSettings;
+                }
+            }
+
+            saveSettings() {
+                const settings = {
+                    m3uFileName: document.getElementById('m3u-file-name').value || 'channels_filtered.m3u',
+                    m3uUrl: document.getElementById('m3u-url').value,
+                    httpPort: document.getElementById('http-port').value || '8080',
+                    epgPort: document.getElementById('epg-port').value || '3001',
+                    epgScriptPath: document.getElementById('epg-script-path').value || '/Users/harshalkutkar/epg_fetch.py',
+                    epgUrl: document.getElementById('epg-url').value,
+                    cacheDuration: parseInt(document.getElementById('cache-duration').value) || 30,
+                    theme: document.getElementById('theme-select').value,
+                    logoSize: document.getElementById('logo-size').value
+                };
+
+                this.settings = settings;
+                localStorage.setItem('iptv-settings', JSON.stringify(settings));
+                this.updateStatus('Settings saved successfully');
+                this.showError('Settings saved successfully', 'success');
+            }
+
+            resetSettings() {
+                if (confirm('Are you sure you want to reset all settings to defaults?')) {
+                    localStorage.removeItem('iptv-settings');
+                    this.settings = this.loadSettings();
+                    this.populateSettingsForm();
+                    this.updateStatus('Settings reset to defaults');
+                    this.showError('Settings reset to defaults', 'success');
+                }
+            }
+
+            exportSettings() {
+                const dataStr = JSON.stringify(this.settings, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'iptv-settings.json';
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            importSettings() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const settings = JSON.parse(e.target.result);
+                                this.settings = { ...this.settings, ...settings };
+                                localStorage.setItem('iptv-settings', JSON.stringify(this.settings));
+                                this.populateSettingsForm();
+                                this.updateStatus('Settings imported successfully');
+                                this.showError('Settings imported successfully', 'success');
+                            } catch (error) {
+                                this.showError('Invalid settings file');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+
+            clearEPGCache() {
+                fetch(`http://localhost:${this.settings.epgPort}/api/cache`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        this.updateStatus('EPG cache cleared');
+                        this.showError('EPG cache cleared', 'success');
+                    })
+                    .catch(error => {
+                        this.showError('Failed to clear EPG cache');
+                    });
+            }
+
+            testEPGConnection() {
+                const testChannel = 'bbcone.nl';
+                fetch(`http://localhost:${this.settings.epgPort}/api/epg/${testChannel}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.updateStatus('EPG connection test successful');
+                            this.showError('EPG connection test successful', 'success');
+                        } else {
+                            this.showError('EPG connection test failed: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        this.showError('EPG connection test failed: ' + error.message);
+                    });
+            }
+
+            reloadConfiguration() {
+                // Reload the page to apply new settings
+                window.location.reload();
+            }
+
+            openSettings() {
+                this.populateSettingsForm();
+                document.getElementById('settings-panel').classList.add('open');
+                document.getElementById('settings-overlay').classList.add('open');
+            }
+
+            closeSettings() {
+                document.getElementById('settings-panel').classList.remove('open');
+                document.getElementById('settings-overlay').classList.remove('open');
+            }
+
+            populateSettingsForm() {
+                document.getElementById('m3u-file-name').value = this.settings.m3uFileName;
+                document.getElementById('m3u-url').value = this.settings.m3uUrl;
+                document.getElementById('http-port').value = this.settings.httpPort;
+                document.getElementById('epg-port').value = this.settings.epgPort;
+                document.getElementById('epg-script-path').value = this.settings.epgScriptPath;
+                document.getElementById('epg-url').value = this.settings.epgUrl;
+                document.getElementById('cache-duration').value = this.settings.cacheDuration;
+                document.getElementById('theme-select').value = this.settings.theme;
+                document.getElementById('logo-size').value = this.settings.logoSize;
+            }
+
+            showError(message, type = 'error') {
+                const errorDiv = document.getElementById('error-message');
+                const errorText = errorDiv.querySelector('.error-text');
+                errorText.textContent = message;
+                
+                if (type === 'success') {
+                    errorDiv.style.background = '#1db954';
+                } else {
+                    errorDiv.style.background = '#ff4757';
+                }
+                
+                errorDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.iptvApp = new IPTVApp();
+        });
+    </script>
+</body>
+</html>

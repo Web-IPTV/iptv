@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IPTV Player</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1e1e2e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        .file-input {
+            margin: 20px 0;
+            text-align: center;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .channels {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .channel {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .channel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .channel-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .channel-group {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            color: #a0a0a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📺 IPTV Player</h1>
+        
+        <div class="file-input">
+            <button onclick="document.getElementById('file-input').click()">
+                📁 Load M3U File
+            </button>
+            <input type="file" id="file-input" accept=".m3u,.m3u8" onchange="handleFile(this.files[0])">
+        </div>
+        
+        <div class="status" id="status">Ready - Load an M3U file to start</div>
+        
+        <div class="channels" id="channels"></div>
+    </div>
+
+    <script>
+        let channels = [];
+
+        function handleFile(file) {
+            if (!file) return;
+            
+            document.getElementById('status').textContent = 'Loading M3U file...';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    channels = parseM3U(content);
+                    renderChannels();
+                    document.getElementById('status').textContent = `Loaded ${channels.length} channels successfully`;
+                } catch (error) {
+                    document.getElementById('status').textContent = `Error: ${error.message}`;
+                    console.error('Error parsing M3U:', error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseM3U(content) {
+            const lines = content.split('\n');
+            const channels = [];
+            let currentChannel = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF:')) {
+                    currentChannel = parseExtInf(line);
+                } else if (line && !line.startsWith('#') && currentChannel) {
+                    currentChannel.url = line;
+                    channels.push(currentChannel);
+                    currentChannel = null;
+                }
+            }
+
+            return channels;
+        }
+
+        function parseExtInf(line) {
+            const channel = {
+                name: '',
+                logo: '',
+                group: '',
+                id: '',
+                url: ''
+            };
+
+            // Extract tvg-name
+            const nameMatch = line.match(/tvg-name="([^"]*)"/);
+            if (nameMatch) {
+                channel.name = nameMatch[1];
+            }
+
+            // Extract tvg-logo
+            const logoMatch = line.match(/tvg-logo="([^"]*)"/);
+            if (logoMatch) {
+                channel.logo = logoMatch[1];
+            }
+
+            // Extract group-title
+            const groupMatch = line.match(/group-title="([^"]*)"/);
+            if (groupMatch) {
+                channel.group = groupMatch[1];
+            }
+
+            // Extract tvg-id
+            const idMatch = line.match(/tvg-id="([^"]*)"/);
+            if (idMatch) {
+                channel.id = idMatch[1];
+            }
+
+            // If no tvg-name, try to extract from the end of the line
+            if (!channel.name) {
+                const parts = line.split(',');
+                if (parts.length > 1) {
+                    channel.name = parts[parts.length - 1].trim();
+                }
+            }
+
+            return channel;
+        }
+
+        function renderChannels() {
+            const container = document.getElementById('channels');
+            container.innerHTML = '';
+
+            channels.forEach((channel, index) => {
+                const div = document.createElement('div');
+                div.className = 'channel';
+                div.onclick = () => playChannel(channel);
+                
+                div.innerHTML = `
+                    <div class="channel-name">${channel.name}</div>
+                    <div class="channel-group">${channel.group || 'General'}</div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        function playChannel(channel) {
+            document.getElementById('status').textContent = `Playing ${channel.name}...`;
+            console.log('Playing channel:', channel);
+            // Here you would implement the actual video playback
+            alert(`Would play: ${channel.name}\nURL: ${channel.url}`);
+        }
+    </script>
+</body>
+</html>
