@@ -1434,8 +1434,17 @@
                     const m3uFileName = this.settings.m3uFileName;
                     const httpPort = this.settings.httpPort;
                     
-                    // Try HTTP server first, then fallback to file upload
-                    const response = await fetch(`http://localhost:${httpPort}/${m3uFileName}`);
+                    // Check if we're on HTTPS (ngrok) or HTTP (local)
+                    const isHttps = window.location.protocol === 'https:';
+                    const baseUrl = isHttps ? 
+                        `https://${window.location.hostname}:${httpPort}` : 
+                        `http://localhost:${httpPort}`;
+                    
+                    console.log(`🔄 Loading default M3U from: ${baseUrl}/${m3uFileName}`);
+                    console.log(`🔍 Protocol: ${window.location.protocol}, HTTPS: ${isHttps}`);
+                    
+                    // Try to fetch the M3U file
+                    const response = await fetch(`${baseUrl}/${m3uFileName}`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
@@ -1445,8 +1454,18 @@
                     this.updateStatus(`Loaded ${this.channels.length} channels from default playlist`);
                 } catch (error) {
                     console.error('Error loading default M3U:', error);
-                    this.updateStatus('Ready - Upload an M3U file to start');
-                    this.showError(`Failed to load default playlist. Please upload an M3U file manually.`);
+                    
+                    // Check if it's a Mixed Content error
+                    if (error.message.includes('Mixed Content') || 
+                        error.message.includes('blocked') ||
+                        error.message.includes('CORS')) {
+                        console.log('🔒 Mixed Content detected - showing helpful message');
+                        this.updateStatus('Ready - Upload an M3U file to start');
+                        this.showWarning('Mixed Content: Cannot load default playlist from HTTPS. Please use the "Upload M3U File" button to load your playlist manually.');
+                    } else {
+                        this.updateStatus('Ready - Upload an M3U file to start');
+                        this.showError(`Failed to load default playlist. Please upload an M3U file manually.`);
+                    }
                 }
             }
 
